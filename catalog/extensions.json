@@ -10,6 +10,16 @@
       "tag": "v1.6.0",
       "commit": "aa6b8bcfb688004368573a5b4b80a68cadb7ec5e",
       "path": "extensions/capture"
+    },
+    {
+      "id": "master_dj_filter",
+      "kind": "extension",
+      "maintainer": "V714",
+      "status": "published",
+      "repository": "https://github.com/V714/open-xy-dj-filter",
+      "tag": "v1.0.0",
+      "commit": "b7359f0c7312e483a32d343d5113ede80bf7d846",
+      "path": "."
     }
   ]
 }

@@ -84,8 +84,11 @@ def extension_at(folder):
                 f'{name}: {key} is 1-{TEXT_LIMITS[key]} characters')
     master_filter = data.get('master_filter')
     if master_filter is not None:
-        require(isinstance(master_filter, dict) and set(master_filter) == {'artwork'} and
+        require(isinstance(master_filter, dict) and {'artwork'} <= set(master_filter) <= {'artwork', 'state_id'} and
                 isinstance(master_filter['artwork'], str), f'{name}: master_filter declares artwork')
+        state_id = master_filter.get('state_id', name)
+        require(isinstance(state_id, str) and NAME.fullmatch(state_id) and state_id != 'eq',
+                f'{name}: master_filter state_id is an extension ID other than eq')
         artwork = Path(master_filter['artwork'])
         require(not artwork.is_absolute() and '..' not in artwork.parts and
                 re.fullmatch(r'[a-z][a-z0-9_]*\.svg', artwork.name) and
@@ -248,7 +251,7 @@ def generate_master_collection(folder, entries):
                   '        }']
     lines += ['    return nullptr;', '}', 'const char* owner() {']
     for e in entries:
-        lines += ['    if(descriptor())return "' + e.id + '";']
+        lines += ['    if(descriptor())return "' + e.master_filter.get('state_id', e.id) + '";']
     lines += ['    return "";', '}', 'const char* asset() {']
     for e in entries:
         lines += ['    if(descriptor())return "' + Path(e.master_filter['artwork']).name + '";']

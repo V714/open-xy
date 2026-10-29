@@ -8,6 +8,10 @@ repository. Declare the capability in `extension.json`:
 "master_filter": {"artwork": "artwork/my_filter.svg"}
 ```
 
+An optional `state_id` in `master_filter` keeps the serialized processor ID
+stable when the extension is renamed. It defaults to the extension ID, uses
+the same identifier syntax and cannot be `eq` (reserved for stock EQ).
+
 Export `opxy::extensions::<id>::hooks` (an empty `Hooks()` is sufficient) and
 `opxy::extensions::<id>::filter`, a constant `opxy::master::Filter` from
 [`master_filter.hpp`](../sdk/include/opxy/master_filter.hpp). Its selector label

@@ -67,6 +67,20 @@ class MasterFilter(unittest.TestCase):
             with self.assertRaises(ValueError):
                 extensions.extension_at(folder.declare(master_filter={'artwork':'../panel.svg'}))
 
+    def test_state_identity_survives_an_extension_rename(self):
+        from tooling import extensions
+        from test_extensions import Folder
+        with Folder() as folder:
+            (folder.root/'panel.svg').write_text('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 222"/>')
+            e=extensions.extension_at(folder.declare(id='renamed_filter',
+                master_filter={'artwork':'panel.svg','state_id':'original_filter'}))
+            source=extensions.generate_master_collection(folder.root,[e]).read_text()
+            self.assertIn('sdk_extension_renamed_filter_filter',source)
+            self.assertIn('return "original_filter";',source)
+            for invalid in ('eq','bad-id','',True):
+                with self.subTest(state_id=invalid), self.assertRaises(ValueError):
+                    extensions.extension_at(folder.declare(master_filter={'artwork':'panel.svg','state_id':invalid}))
+
     @unittest.skipUnless(services.HOST_CXX, 'No working host C++ compiler')
     def test_companion_round_trip_remapping_and_safe_defaults(self):
         import json

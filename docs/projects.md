@@ -126,8 +126,8 @@ read as saved. A section for another profile is ignored.
 ## `open-xy.master-filter`
 
 Version 1 contains `processor` (`eq` or the selected master-filter extension's
-ID) and integer `sweep` (0–1023, neutral 512). The SDK writes this section only
-when a master-filter owner is included. It uses the envelope's existing file
+`state_id`, defaulting to its ID) and integer `sweep` (0–1023, neutral 512).
+The SDK writes this section only when a master-filter owner is included. It uses the envelope's existing file
 size/CRC binding and the same streaming reader as machine remapping.
 
 A matching companion restores the choice and sweep when its project becomes
