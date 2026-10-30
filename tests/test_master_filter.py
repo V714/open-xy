@@ -82,6 +82,41 @@ class MasterFilter(unittest.TestCase):
                     extensions.extension_at(folder.declare(master_filter={'artwork':'panel.svg','state_id':invalid}))
 
     @unittest.skipUnless(services.HOST_CXX, 'No working host C++ compiler')
+    def test_filter_state_survives_streamed_companion_with_high_machine_numbers(self):
+        import json
+        from test_projects import host_writer
+        layout = {f'm{i:03d}': {'engine': 34 + i, 'page': 100} for i in range(219)}
+        layout['karplus'] = {'engine': 253, 'page': 254}
+        table = ''.join(f'    {{"{name}", number({n["engine"]}), number({n["page"]}), false}},\n'
+                        for name, n in layout.items())
+        source = (ROOT / 'tests/fixtures/project_companion.cpp').read_text()
+        start = source.index('const opxy::platform::CompanionMachine sdk_companion_machines[] = {\n')
+        end = source.index('    {nullptr, nullptr, nullptr, false}', start)
+        with tempfile.TemporaryDirectory(prefix='master-stream-') as directory:
+            folder = Path(directory)
+            fixture = folder / 'project_companion_many.cpp'
+            fixture.write_text(source[:start] +
+                               'const opxy::platform::CompanionMachine sdk_companion_machines[] = {\n' +
+                               table + source[end:])
+            writer = host_writer(folder, fixture)
+            reader = host_writer(folder, 'project_load.cpp')
+            project = folder / 'song.xy'
+            packet = (1 << 30) | 987
+            saved = subprocess.run([str(writer), str(project), '1', str(packet)],
+                                   capture_output=True, text=True, timeout=30)
+            self.assertEqual(saved.returncode, 0, saved.stderr)
+            raw = project.with_suffix('.oxy').read_bytes()
+            self.assertGreater(len(raw), 8 * 1024)
+            document = json.loads(raw)
+            self.assertEqual(document['sections']['open-xy.machines']['machines'], layout)
+            self.assertEqual(document['sections']['open-xy.master-filter'],
+                             dict(version=1, processor='probe', sweep=987))
+            loaded = subprocess.run([str(reader), str(project), '1', 'master', '0:253,34'],
+                                    capture_output=True, text=True, timeout=30)
+            self.assertEqual(loaded.returncode, 0, loaded.stderr)
+            self.assertEqual(loaded.stdout.strip().splitlines(), ['0:41,18', f'master:{packet},512'])
+
+    @unittest.skipUnless(services.HOST_CXX, 'No working host C++ compiler')
     def test_companion_round_trip_remapping_and_safe_defaults(self):
         import json
         from test_projects import host_writer
